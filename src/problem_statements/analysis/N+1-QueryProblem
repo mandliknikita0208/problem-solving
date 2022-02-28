@@ -1,0 +1,26 @@
+As per the analysis for export of data for 20 contracts, it takes 4s. Below is the description for the performance analysis for 18 records:
+
+When we are searching for 18 contracts in the database below things happens:
+
+For each contract, it will be firing 10 DB queries so if we have 18 contracts to be exported it will be firing 180 queries to fetch the records from the database which is taking time.
+
+This problem is known as the n+1 queries problem in hibernate for more references refer here.
+
+
+
+For solving this problem there are 2 ways:
+
+Convert List type collection to set: This solves the problem but it adds another overhead of cartesian product for generating result set: https://vladmihalcea.com/hibernate-multiplebagfetchexception/
+Use @NamedEntityGraph have tried this approach but getting the below error which will eagerly fetch the records: 
+"message": "org.hibernate.loader.MultipleBagFetchException: cannot simultaneously fetch multiple bags:According to the documentation, the best way to fix this is to use a JPQL query.
+
+Have tried with the JPQL query approach but the performance is comparatively low when compared with the set and the named entity graph approach.
+
+
+Currently, we have optimized the query by using
+
+Adding distinct in select statements
+use of left fetch join for the child and sub child tables
+replaced the list data structure to set
+Added cache to reduce database calls for static data
+By these optimizations, there is only one DB call for all the contracts that were to be exported whereas earlier there were n* 10 DB calls
